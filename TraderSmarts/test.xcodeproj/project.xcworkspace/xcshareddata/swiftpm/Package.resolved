@@ -1,0 +1,15 @@
+{
+  "originHash" : "d82f4ce346af7f8e07885f200c65bc61f050b611704e920cacd8e984f5e5557e",
+  "pins" : [
+    {
+      "identity" : "http-client-module",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiftui-packages/http-client-module.git",
+      "state" : {
+        "revision" : "cc69838ebff5a1e7f6d6c0168592277091311395",
+        "version" : "1.0.0"
+      }
+    }
+  ],
+  "version" : 3
+}
