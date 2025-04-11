@@ -29,7 +29,6 @@ func fetchString(from urlString: String, completion: @escaping (String?, Error?)
 
 struct ContentView: View {
   @State private var selectedDate = Date()
-  @State private var businessDays: [Date] = []
   @State private var fetchedText: String = ""
   @State private var userText: String = ""
   @State private var url1: String = "https://tradersmarts.quantkey.com/api/v1/plan.php?lic="
@@ -41,9 +40,26 @@ struct ContentView: View {
   @State private var dateMsg: String = ""
   @State private var finalURL: String = ""
   @State private var licMsg: String = ""
+  @State private var tickerMsg: String = ""
   @State private var exportToMotiveWave = false
     
   private let userTextKey = "savedUserText"
+  
+  @State private var selectedOption = 0
+  let options = ["6E", "CL", "ES", "GC", "NQ", "RTY", "YM"]
+  
+  struct TSGreenButtonStyle: ButtonStyle {
+      func makeBody(configuration: Configuration) -> some View {
+          configuration.label
+              .font(.headline)
+              .frame(maxWidth: .infinity, minHeight: 40)
+              .padding(.horizontal, 5)
+              .background(configuration.isPressed ? Color.green.opacity(0.8) : Color(red: 33/255, green: 127/255, blue: 110/255))
+              .foregroundColor(.white)
+              .cornerRadius(10)
+              .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
+      }
+  }
   
   struct TSButtonStyle: ButtonStyle {
       func makeBody(configuration: Configuration) -> some View {
@@ -51,7 +67,7 @@ struct ContentView: View {
               .font(.headline)
               .frame(maxWidth: .infinity, minHeight: 40)
               .padding(.horizontal, 5)
-              .background(configuration.isPressed ? Color.blue.opacity(0.8) : Color.blue)
+              .background(configuration.isPressed ? Color(red: 87/255, green: 178/255, blue: 247/255) : Color.blue)
               .foregroundColor(.white)
               .cornerRadius(10)
               .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
@@ -71,13 +87,17 @@ struct ContentView: View {
                 selection: $selectedDate,
                 displayedComponents: [.date]
               )
-              .datePickerStyle(.automatic)
+              .datePickerStyle(.compact)
               .padding()
               .font(.title3)
-              .cornerRadius(10)
-              .onChange(of: selectedDate) { newValue in
-                  print("Selection changed to: \(newValue)")
-                  titleMsg = "TraderSmarts for \(dateFormatter.string(from: newValue))"
+              .onAppear {
+                dateMsg = formatDate(date: selectedDate, format: "yyyyMMdd")
+                titleMsg = "TraderSmarts for \(dateFormatter.string(from: selectedDate))"
+              }
+              
+              .onChange(of: selectedDate) {
+                  print("Selection changed to: \(selectedDate)")
+                  titleMsg = "TraderSmarts for \(dateFormatter.string(from: selectedDate))"
                   dateMsg = formatDate(date: selectedDate, format: "yyyyMMdd")
               }
               
@@ -88,6 +108,7 @@ struct ContentView: View {
               TextField("XXXXXX-XXX-XXXXXX", text: $userText)
                 .cornerRadius(10)
                 .padding()
+                .font(.system(size: 15))
                 .onAppear {
                     loadSavedText()
                 }
@@ -103,55 +124,98 @@ struct ContentView: View {
               }
               .padding()
               .cornerRadius(10)
-              .toggleStyle(SwitchToggleStyle(tint: .blue))
+              .toggleStyle(SwitchToggleStyle(tint: .green))
               
             }
             .padding()
             .onAppear {
-              businessDays = generateBusinessDays()
-              if !businessDays.isEmpty {
-                selectedDate = businessDays.first!
-              }
             }
           }
           
-          HStack(spacing: 15){
-            Button("ES") {
-              fetchTextFromURL(ticker: "ES")
-            }
-            .buttonStyle(TSButtonStyle())
-            Button("NQ") {
-              fetchTextFromURL(ticker: "NQ")
-            }
-            .buttonStyle(TSButtonStyle())
-            Button("CL") {
-              fetchTextFromURL(ticker: "CL")
-            }
-            .buttonStyle(TSButtonStyle())
-            Button("BTC") {
-              fetchTextFromURL(ticker: "BTC")
-            }
-            .buttonStyle(TSButtonStyle())
-            Button("6E") {
+//          Picker("", selection: $selectedOption) {
+//              ForEach(0..<options.count, id: \.self) { index in
+//                  Text(options[index]).tag(index)
+//              }
+//          }
+//          .pickerStyle(.segmented)
+//          .font(.title2)
+//          .background(Color.blue)
+//          .foregroundColor(.white)
+//          .cornerRadius(3)
+//          .padding()
+          
+          HStack(spacing: 5){
+            
+            Button(action: {
               fetchTextFromURL(ticker: "6E")
+            }) {
+                HStack {
+                  //Image(systemName: "drop.halffull")
+                  Text("6E")
+                }
             }
             .buttonStyle(TSButtonStyle())
-            Button("GC") {
+            
+            Button(action: {
+              fetchTextFromURL(ticker: "CL")
+            }) {
+                HStack {
+                  Image(systemName: "drop.halffull")
+                  Text("Oil")
+                }
+            }
+            .buttonStyle(TSGreenButtonStyle())
+            
+            Button(action: {
+              fetchTextFromURL(ticker: "ES")
+            }) {
+                HStack {
+                  Image(systemName: "dollarsign")
+                  Text("S&P 500")
+                }
+            }
+            .buttonStyle(TSButtonStyle())
+            
+            Button(action: {
               fetchTextFromURL(ticker: "GC")
+            }) {
+                HStack {
+                  Image(systemName: "dollarsign.bank.building")
+                  Text("Gold")
+                }
+            }
+            .buttonStyle(TSGreenButtonStyle())
+            
+            Button(action: {
+              fetchTextFromURL(ticker: "NQ")
+            }) {
+                HStack {
+                  Image(systemName: "desktopcomputer")
+                  Text("Nasdaq")
+                }
             }
             .buttonStyle(TSButtonStyle())
-            Button("RTY") {
+
+            Button(action: {
               fetchTextFromURL(ticker: "RTY")
+            }) {
+                HStack {
+                  Image(systemName: "dollarsign.ring.dashed")
+                  Text("RTY")
+                }
             }
-            .buttonStyle(TSButtonStyle())
-            Button("SI") {
-              fetchTextFromURL(ticker: "SI")
-            }
-            .buttonStyle(TSButtonStyle())
-            Button("YM") {
+            .buttonStyle(TSGreenButtonStyle())
+            
+            Button(action: {
               fetchTextFromURL(ticker: "YM")
+            }) {
+                HStack {
+                  Image(systemName: "house.fill")
+                  Text("Dow")
+                }
             }
             .buttonStyle(TSButtonStyle())
+
           }
             
             if let error = errorMessage {
@@ -159,16 +223,17 @@ struct ContentView: View {
                     .foregroundColor(.red)
                     .padding()
             }
-            
-            ScrollView {
-                VStack(alignment: .leading) {
-                  TextEditor(text: $fetchedText)
-                    .font(.title3)
-                }
-                .frame(maxWidth: .infinity, minHeight: 40)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding()
+          
+          VStack(alignment: .leading) {
+              TextEditor(text: $fetchedText)
+                  .font(.title3)
+                  .cornerRadius(8)
+          }
+          .frame(maxWidth: .infinity, minHeight: 1)
+          .background(Color(.gray).opacity(0.5))
+          .cornerRadius(12)
+          
+          
         }
         .padding()
     }
@@ -213,33 +278,6 @@ struct ContentView: View {
       }
   }
   
-  private func generateBusinessDays() -> [Date] {
-    var days: [Date] = []
-    let calendar = Calendar.current
-    
-    let today = Date()
-    guard let oneYearAgo = calendar.date(byAdding: .year, value: -1, to: today) else {
-      return days
-    }
-    var currentDate = oneYearAgo
-    
-    while currentDate <= today {
-      let weekday = calendar.component(.weekday, from: currentDate)
-      
-      if weekday != 1 && weekday != 7 {
-        days.append(currentDate)
-      }
-      
-      if let nextDay = calendar.date(byAdding: .day, value: 1, to: currentDate) {
-        currentDate = nextDay
-      } else {
-        break
-      }
-    }
-    
-    return days.reversed()
-  }
-  
   private var dateFormatter: DateFormatter {
       let formatter = DateFormatter()
       formatter.dateStyle = .medium
@@ -248,6 +286,7 @@ struct ContentView: View {
   }
   
   func fetchTextFromURL(ticker: String) {
+    tickerMsg = ticker.uppercased()
      finalURL = url1 + licMsg + url2 + ticker + url3 + dateMsg + url4
 
         fetchString(from: finalURL) { (string, error) in
@@ -258,7 +297,7 @@ struct ContentView: View {
             
             if let string = string {
               fetchedText = cleanHTMLTags(from: string)
-                print("Fetched string: \(string)")
+                //print("Fetched string: \(string)")
             }
         }
     }
@@ -278,23 +317,29 @@ struct ContentView: View {
             print("Error removing HTML tags: \(error)")
         }
         
-      cleanedText = cleanedText.replacingOccurrences(of: "Contract ", with: "\nContract ")
-      cleanedText = cleanedText.replacingOccurrences(of: "TraderSmarts Numbers for", with: "\n\nTraderSmarts Numbers for")
-      cleanedText = cleanedText.replacingOccurrences(of: "MTS Numbers: ", with: "\nMTS Numbers: ")
+      cleanedText = cleanedText.replacingOccurrences(of: tickerMsg + " Contract Notes:", with: "\n\n" + tickerMsg + " Contract Notes:")
+      cleanedText = cleanedText.replacingOccurrences(of: tickerMsg + " Macro Technical View:", with: "\n\n" + tickerMsg + " Macro Technical View:")
+      cleanedText = cleanedText.replacingOccurrences(of: tickerMsg + " Execution/Target Zones:", with: "\n\n" + tickerMsg + " Execution/Target Zones:\n")
+      cleanedText = cleanedText.replacingOccurrences(of: "TraderSmarts Numbers for " + tickerMsg + ":", with: "\n\nTraderSmarts Numbers for " + tickerMsg + ": ")
       
       cleanedText = cleanedText.replacingOccurrences(of: " FTD", with: "")
       cleanedText = cleanedText.replacingOccurrences(of: " FTU", with: "")
-      cleanedText = cleanedText.replacingOccurrences(of: "Extreme Short", with: "    Extreme Short\n")
-      cleanedText = cleanedText.replacingOccurrences(of: "Highest Odds Short", with: "    Highest Odds Short\n")
-      cleanedText = cleanedText.replacingOccurrences(of: "Range Short", with: "   Range Short\n\n")
-      cleanedText = cleanedText.replacingOccurrences(of: "Line in the Sand", with: "  Line in the Sand\n\n")
-      cleanedText = cleanedText.replacingOccurrences(of: "Range Long", with: "   Range Long\n")
-      cleanedText = cleanedText.replacingOccurrences(of: "Highest Odds Long", with: "   Highest Odds Long\n")
-      cleanedText = cleanedText.replacingOccurrences(of: "Extreme Long", with: "   Extreme Long\n\n")
+      cleanedText = cleanedText.replacingOccurrences(of: "Extreme Short", with: " Extreme Short\n")
+      cleanedText = cleanedText.replacingOccurrences(of: "Highest Odds Short", with: " Highest Odds Short\n")
+      cleanedText = cleanedText.replacingOccurrences(of: "Range Short", with: " Range Short\n\n")
+      cleanedText = cleanedText.replacingOccurrences(of: "Line in the Sand", with: " Line in the Sand\n\n")
+      cleanedText = cleanedText.replacingOccurrences(of: "Range Long", with: " Range Long\n")
+      cleanedText = cleanedText.replacingOccurrences(of: "Highest Odds Long", with: " Highest Odds Long\n")
+      cleanedText = cleanedText.replacingOccurrences(of: "Extreme Long", with: " Extreme Long\n\n")
       
       cleanedText = cleanedText.replacingOccurrences(of: "<td style = \"text-align:right\">", with: "\n")
       cleanedText = cleanedText.replacingOccurrences(of: "&nbsp&nbsp", with: "")
-      cleanedText = cleanedText.replacingOccurrences(of: "Execution/Target Zones:", with: "\n\nExecution/Target Zones:\n")
+      cleanedText = cleanedText.replacingOccurrences(of: "Contract " + tickerMsg, with: "\nContract " + tickerMsg)
+      
+      cleanedText = cleanedText.replacingOccurrences(of: "   ", with: " ")
+      cleanedText = cleanedText.replacingOccurrences(of: "  ", with: " ")
+      cleanedText = cleanedText.replacingOccurrences(of: "   ", with: " ")
+      cleanedText = cleanedText.replacingOccurrences(of: "  ", with: " ")
       
         return cleanedText.trimmingCharacters(in: .whitespacesAndNewlines)
     }
